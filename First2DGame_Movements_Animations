@@ -1,0 +1,90 @@
+extends Area2D
+signal hit
+
+# Declare member variables here. 
+export var speed = 400 # How fast the player will move
+var screen_size  # Size of the game window
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	screen_size = get_viewport_rect().size
+# This variable is setting the screen size to a rectangle
+	hide()
+# The hide() makes the player hidden when the game starts
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta):
+	var velocity = Vector2.ZERO # The player's movement vector
+	if Input.is_action_pressed("move_right"):
+		velocity.x += 1
+	if Input.is_action_pressed("move_left"):
+		velocity.x -= 1
+	if Input.is_action_pressed("move_down"):
+		velocity.y += 1
+	if Input.is_action_pressed("move_up"):
+		velocity.y -= 1
+	
+	# Let's Summar this code: #
+	# The first line is setting the players movement Vector to ZERO
+	# The rest of the lines are using the function Input.is_action_pressed to use the Inputmap we created
+	# move_right, etc... were all added to the input map
+	# The velocity has a sub-function of x or y depending on the direction #
+	
+	if velocity.length() > 0:
+		velocity = velocity.normalized() * speed
+		$AnimatedSprite.play()
+	else:
+			$AnimatedSprite.stop()
+	# The '$' symbol is short for get_node()
+	# This would be the same code as get_node("AnimatedSprite").play()
+	# Since we have the players movement direction we can use clamp to keep it within a certain range
+	
+	position += velocity * delta
+	position.x = clamp(position.x, 0, screen_size.x)
+	position.y = clamp(position.y, 0, screen_size.y)
+
+	# position is a vector2D function which requires an input for both x and y axis
+	# clamp is a function that limits the screen width so the character doesnt move off screen
+	
+
+	if velocity.x != 0:
+		$AnimatedSprite.animation = "walk"
+		$AnimatedSprite.flip_v = false
+		$AnimatedSprite.flip_h = velocity.x < 0
+	elif velocity.y != 0:
+		$AnimatedSprite.animation = "up"
+		$AnimatedSprite.flip_v = velocity.y > 0
+
+	# This block of code under the _process function is to set the animations for the player movement
+	# The first half is the code is flipping the animation on the X axis for the player movement
+	# If the movement is more than 0 then that block of code activates
+	# The flip_v stands for flip vertical and its set to false to keep the animation based on the x axis
+	# the flip_h mirrors the animation when the player is turning left or right
+	
+	# The next block of code essentially does the same thing for when the player moves on the y axis
+	# When the player moves down up it uses the up animation
+	# When the player moves down it flips vertically to mirror the animation
+	
+	
+	# A funcction to reset the player when starting a new game
+func start(pos):
+	position = pos
+	show()
+	$CollisionShape2D.disabled = false
+	
+
+
+
+
+			# Creation of my first signal
+			
+func _on_Player_body_entered(body):
+		hide() # Player disappears after being hit
+		emit_signal("hit")
+		# Must be deferred as we can't change physics properties on a physics callback
+		$CollisionShape2D.set_deferred("disabled", true) #set_deffered() tells GoDot to wait to disable the shape until its safe to do so
+		# Each time the enemy hits the player, the signal is going to be emitted
+	
+			# This signal was created by Clicking on Player > Node > body_entered(body: Node) > Connect > Connect
+	
